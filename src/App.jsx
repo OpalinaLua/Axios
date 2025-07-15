@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { api } from "./services/api";
+import {
+  atualizarUsuario,
+  buscarUsuario,
+  criarUsuario,
+  deletarUsuario,
+} from "./services/apiService";
+import { PenLine, Trash2 } from "lucide-react";
 
 function App() {
   const [users, setUsers] = useState([]);
+  const [loading, setloading] = useState(true);
   const getData = async () => {
     try {
-      const { data } = await api.get("/users");
-      setUsers(data);
+      const userData = await buscarUsuario();
+      setUsers(userData);
     } catch (error) {
       console.error(error);
+    } finally {
+      setloading(false);
     }
   };
   const addUser = async () => {
@@ -17,21 +26,49 @@ function App() {
       name: "lua",
       email: "fdssf@gmail.com",
     };
-    const response = await api.post("users", newUser);
-    setUsers((prev) => [...prev, response.data]);
+    const usuarioCriado = await criarUsuario(newUser);
+    setUsers((prev) => [...prev, usuarioCriado]);
+  };
+  const atualizaUsuario = async (id) => {
+    const newUser = {
+      name: "lua",
+      email: "fdssf@gmail.com",
+    };
+    const usuarioAtualizado = await atualizarUsuario(id, newUser);
+    setUsers((prev) =>
+      prev.map((item) =>
+        item.id === usuarioAtualizado.id ? usuarioAtualizado : item
+      )
+    );
+  };
+  const handleDeletarUsario = async (id) => {
+    await deletarUsuario(id);
+    const novaLista = users.filter((user) => user.id !== id);
+    setUsers(novaLista);
   };
   console.log(users);
 
   useEffect(() => {
     getData();
   }, []);
+  if (loading) {
+    return <h1>carregando...</h1>;
+  }
   return (
     <>
-      <h1>Meus repos Github</h1>
+      <h1>Usuario</h1>
       {users.map((user) => (
-        <p key={user.id}>{user.name}</p>
+        <div key={user.id}>
+          <p>{user.name}</p>
+          <button onClick={() => handleDeletarUsario(user.id)}>
+            <Trash2 size={15} />
+          </button>
+          <button onClick={() => atualizaUsuario(user.id)}>
+            <PenLine size={15} />
+          </button>
+        </div>
       ))}
-      <button onClick={() => addUser()}>adc usurario</button>
+      <button onClick={() => addUser()}>adicionar usurario</button>
     </>
   );
 }
